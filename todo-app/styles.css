@@ -11,6 +11,9 @@
   --color-primary-dark: #4338ca;
   --color-primary-soft: #eef2ff;
   --color-primary-border: #c7d2fe;
+  /* 主操作按钮的粉色强调色(白字对比度 ≥ 4.5:1) */
+  --color-accent: #d81b60;
+  --color-accent-dark: #ad1457;
   --color-danger: #dc2626;
   --color-danger-soft: #fef2f2;
   --color-input-border: #d1d5db;
@@ -162,7 +165,7 @@ h1 {
   padding: 0 18px;
   border: none;
   border-radius: var(--radius-control);
-  background-color: var(--color-primary);
+  background-color: var(--color-accent);
   color: #ffffff;
   font-family: inherit;
   font-size: 0.95rem;
@@ -434,7 +437,7 @@ h1 {
   }
 
   .add-button:hover {
-    background-color: var(--color-primary-dark);
+    background-color: var(--color-accent-dark);
   }
 
   .filter-tab:hover:not(.is-active) {
