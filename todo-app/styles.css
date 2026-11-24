@@ -178,6 +178,46 @@ h1 {
   transform: translateY(1px);
 }
 
+/* 指定时间(可选):与标题输入区分开,独占一行并允许在窄屏换行 */
+.composer-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.schedule-label {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.schedule-optional {
+  margin-left: 2px;
+  font-size: 0.75rem;
+}
+
+.due-input {
+  flex: 1 1 210px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.due-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
 .composer-meta {
   display: flex;
   align-items: center;
@@ -255,8 +295,15 @@ h1 {
   cursor: pointer;
 }
 
-.todo-title {
+.todo-content {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.todo-title {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 1rem;
@@ -269,8 +316,14 @@ h1 {
   text-decoration-thickness: 2px;
 }
 
+.todo-due {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
 .todo-title-edit {
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   height: 38px;
   padding: 0 8px;

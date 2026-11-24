@@ -16,19 +16,31 @@
     </header>
 
     <section class="composer" aria-label="新增待办">
-      <form id="todo-form" class="composer-row" novalidate>
-        <label class="sr-only" for="todo-input">待办内容</label>
-        <input
-          id="todo-input"
-          class="todo-input"
-          type="text"
-          name="title"
-          placeholder="要做什么?"
-          maxlength="100"
-          autocomplete="off"
-          aria-describedby="input-hint input-error"
-        >
-        <button type="submit" class="add-button">添加</button>
+      <form id="todo-form" class="composer-form" novalidate>
+        <div class="composer-row">
+          <label class="sr-only" for="todo-input">待办内容</label>
+          <input
+            id="todo-input"
+            class="todo-input"
+            type="text"
+            name="title"
+            placeholder="要做什么?"
+            maxlength="100"
+            autocomplete="off"
+            aria-describedby="input-hint input-error"
+          >
+          <button type="submit" class="add-button">添加</button>
+        </div>
+        <div class="composer-schedule">
+          <label class="schedule-label" for="todo-due">指定时间<small class="schedule-optional">(可选)</small></label>
+          <input
+            id="todo-due"
+            class="due-input"
+            type="datetime-local"
+            name="dueAt"
+            step="60"
+          >
+        </div>
       </form>
       <div class="composer-meta">
         <span id="input-hint" class="input-hint">最多 100 字</span>
