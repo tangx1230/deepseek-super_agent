@@ -25,7 +25,13 @@ function isValidTodo(item) {
     item.title.length <= MAX_TITLE_LENGTH &&
     typeof item.completed === 'boolean' &&
     typeof item.createdAt === 'string' &&
-    !Number.isNaN(Date.parse(item.createdAt))
+    !Number.isNaN(Date.parse(item.createdAt)) &&
+    // dueAt 为新增的可选字段:缺省或 null 表示未指定时间
+    (item.dueAt === undefined ||
+      item.dueAt === null ||
+      (typeof item.dueAt === 'string' &&
+        item.dueAt.length > 0 &&
+        !Number.isNaN(Date.parse(item.dueAt))))
   );
 }
 
@@ -53,7 +59,8 @@ function loadTodos() {
       console.warn('本地待办数据格式非法,已降级为空列表。');
       return [];
     }
-    return parsed;
+    // 兼容旧数据:没有 dueAt 字段的待办视为未指定时间
+    return parsed.map((todo) => ({ ...todo, dueAt: todo.dueAt ?? null }));
   } catch (error) {
     warnStorageOnce('读取本地待办数据失败,已降级为空列表。', error);
     return [];
@@ -81,6 +88,7 @@ const elements = {
   form: document.getElementById('todo-form'),
   composerRow: document.querySelector('.composer-row'),
   input: document.getElementById('todo-input'),
+  due: document.getElementById('todo-due'),
   error: document.getElementById('input-error'),
   charCount: document.getElementById('char-count'),
   list: document.getElementById('todo-list'),
@@ -107,6 +115,26 @@ function getVisibleTodos() {
     return todos.filter((todo) => todo.completed);
   }
   return todos;
+}
+
+/**
+ * 把存储中的 ISO 时间格式化为列表里展示的本地时间。
+ * 同年省略年份,跨年时补全年份,避免“什么时间”产生歧义。
+ * @param {string} iso ISO 时间字符串
+ * @returns {string} 形如“11月25日 19:30”的本地时间文本,非法时间返回空字符串
+ */
+function formatDueAt(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const pad = (value) => String(value).padStart(2, '0');
+  const monthDay = `${date.getMonth() + 1}月${date.getDate()}日`;
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  if (date.getFullYear() === new Date().getFullYear()) {
+    return `${monthDay} ${time}`;
+  }
+  return `${date.getFullYear()}年${monthDay} ${time}`;
 }
 
 /**
@@ -160,7 +188,18 @@ function createTodoItem(todo) {
   deleteButton.setAttribute('aria-label', '删除待办');
   deleteButton.textContent = '×';
 
-  item.append(checkLabel, titleNode, deleteButton);
+  const content = document.createElement('div');
+  content.className = 'todo-content';
+  content.appendChild(titleNode);
+  if (todo.dueAt) {
+    const dueNode = document.createElement('time');
+    dueNode.className = 'todo-due';
+    dueNode.dateTime = todo.dueAt;
+    dueNode.textContent = `时间:${formatDueAt(todo.dueAt)}`;
+    content.appendChild(dueNode);
+  }
+
+  item.append(checkLabel, content, deleteButton);
   return item;
 }
 
@@ -259,6 +298,20 @@ function createId() {
 }
 
 /**
+ * 把 datetime-local 输入框的值转换为 ISO 时间字符串。
+ * 空值或非法值返回 null,表示不为待办指定时间。
+ * @param {string} value 输入框的值(本地时间)
+ * @returns {string|null} ISO 时间字符串或 null
+ */
+function parseDueAtInput(value) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/**
  * 处理新增待办表单提交(点击“添加”或输入框内按 Enter)。
  * @param {SubmitEvent} event 提交事件
  */
@@ -276,6 +329,7 @@ function handleSubmit(event) {
     title: title.slice(0, MAX_TITLE_LENGTH),
     completed: false,
     createdAt: new Date().toISOString(),
+    dueAt: parseDueAtInput(elements.due.value),
   };
 
   todos.unshift(todo);
@@ -283,6 +337,7 @@ function handleSubmit(event) {
   saveTodos(todos);
 
   elements.input.value = '';
+  elements.due.value = '';
   updateCharCount();
   hideInputError();
   elements.input.focus();
