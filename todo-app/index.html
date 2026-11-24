@@ -31,8 +31,21 @@
           >
           <button type="submit" class="add-button">添加</button>
         </div>
+        <div class="composer-priority">
+          <span class="composer-label" id="priority-label">分类</span>
+          <div class="priority-options" role="radiogroup" aria-labelledby="priority-label">
+            <label class="priority-option">
+              <input class="priority-radio sr-only" type="radio" name="priority" value="normal" checked>
+              <span class="priority-option-label">一般</span>
+            </label>
+            <label class="priority-option">
+              <input class="priority-radio sr-only" type="radio" name="priority" value="urgent">
+              <span class="priority-option-label priority-option-label--urgent">紧急</span>
+            </label>
+          </div>
+        </div>
         <div class="composer-schedule">
-          <label class="schedule-label" for="todo-due">指定时间<small class="schedule-optional">(可选)</small></label>
+          <label class="composer-label" for="todo-due">指定时间<small class="schedule-optional">(可选)</small></label>
           <input
             id="todo-due"
             class="due-input"

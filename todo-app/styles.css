@@ -19,6 +19,10 @@
   --color-accent-soft-hover: #dcfce7;
   --color-danger: #dc2626;
   --color-danger-soft: #fef2f2;
+  /* 待办分类:一般使用中性色,紧急使用深红文字保证对比度 */
+  --color-priority-normal-text: #4b5563;
+  --color-priority-urgent-text: #b91c1c;
+  --color-priority-urgent-border: #fecaca;
   --color-input-border: #d1d5db;
   --color-hover: #f9fafb;
   --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.08);
@@ -181,7 +185,8 @@ h1 {
   transform: translateY(1px);
 }
 
-/* 指定时间(可选):与标题输入区分开,独占一行并允许在窄屏换行 */
+/* 分类与指定时间:与标题输入区分开,各自独占一行并允许在窄屏换行 */
+.composer-priority,
 .composer-schedule {
   display: flex;
   flex-wrap: wrap;
@@ -190,7 +195,7 @@ h1 {
   margin-top: 10px;
 }
 
-.schedule-label {
+.composer-label {
   flex: 0 0 auto;
   color: var(--color-text-muted);
   font-size: 0.875rem;
@@ -199,6 +204,54 @@ h1 {
 .schedule-optional {
   margin-left: 2px;
   font-size: 0.75rem;
+}
+
+/* 分类选择:原生单选框配胶囊样式,保留键盘与读屏语义 */
+.priority-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.priority-option {
+  position: relative;
+  display: inline-flex;
+}
+
+.priority-option-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+  user-select: none;
+}
+
+.priority-radio:checked + .priority-option-label {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-dark);
+  font-weight: 600;
+}
+
+.priority-radio:checked + .priority-option-label--urgent {
+  border-color: var(--color-priority-urgent-border);
+  background-color: var(--color-danger-soft);
+  color: var(--color-priority-urgent-text);
+}
+
+.priority-radio:focus-visible + .priority-option-label {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .due-input {
@@ -306,7 +359,68 @@ h1 {
   min-width: 0;
 }
 
+.todo-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 分类徽标:一般用中性色,紧急用浅红底 + 深红字 */
+.todo-priority {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 22px;
+  margin-top: 1px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.todo-priority.is-normal {
+  border-color: var(--color-border);
+  background-color: var(--color-bg);
+  color: var(--color-priority-normal-text);
+}
+
+.todo-priority.is-urgent {
+  border-color: var(--color-priority-urgent-border);
+  background-color: var(--color-danger-soft);
+  color: var(--color-priority-urgent-text);
+}
+
+/* 徽标本身是按钮的热区中心,点击即可切换分类 */
+.priority-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 40px;
+  margin: -9px 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.priority-toggle:hover .todo-priority.is-normal {
+  border-color: var(--color-text-muted);
+}
+
+.priority-toggle:hover .todo-priority.is-urgent {
+  border-color: var(--color-priority-urgent-text);
+}
+
 .todo-title {
+  flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 1rem;
