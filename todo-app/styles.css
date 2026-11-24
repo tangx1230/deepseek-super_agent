@@ -1,0 +1,468 @@
+/* ==========================================================================
+   基础与主题变量
+   ========================================================================== */
+:root {
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-primary: #4f46e5;
+  --color-primary-dark: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-primary-border: #c7d2fe;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-input-border: #d1d5db;
+  --color-hover: #f9fafb;
+  --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.08);
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --transition-fast: 160ms ease;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* 仅供屏幕阅读器识别的文本 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   页面容器与标题
+   ========================================================================== */
+.app {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+  background-color: var(--color-surface);
+}
+
+.app-header {
+  margin-bottom: 20px;
+}
+
+.app-title,
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-subtitle {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   新增待办
+   ========================================================================== */
+.composer-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.composer-row.is-shaking {
+  animation: shake 240ms ease-in-out;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.todo-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.todo-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.todo-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
+.todo-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
+}
+
+.add-button {
+  flex: 0 0 auto;
+  min-width: 76px;
+  height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.add-button:active {
+  transform: translateY(1px);
+}
+
+.composer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.input-error {
+  margin: 6px 0 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   待办列表
+   ========================================================================== */
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast);
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+/* 新增待办时播放一次入场动画(180ms) */
+.todo-item.is-new {
+  animation: item-in 180ms ease-out;
+}
+
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 复选框的点击热区通过 label 放大到 40px */
+.todo-check {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: -6px 0;
+  cursor: pointer;
+}
+
+.todo-checkbox {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.todo-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  transition: color var(--transition-fast);
+}
+
+.todo-item.is-completed .todo-title {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.todo-title-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1rem;
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
+.delete-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 1.375rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+/* ==========================================================================
+   空状态
+   ========================================================================== */
+.empty-state {
+  padding: 40px 0 32px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.empty-icon {
+  display: block;
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
+
+.empty-text {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   筛选标签
+   ========================================================================== */
+.filters {
+  margin-top: 20px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  padding: 4px;
+  border-radius: 12px;
+  background-color: var(--color-bg);
+}
+
+.filter-tab {
+  flex: 1 1 0;
+  min-height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #4b5563;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.filter-tab.is-active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+/* ==========================================================================
+   底部状态栏
+   ========================================================================== */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.remaining-count {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.clear-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 8px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.clear-button:disabled {
+  border-color: var(--color-border);
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   桌面端布局与悬停效果
+   ========================================================================== */
+@media (min-width: 768px) {
+  .app {
+    max-width: 600px;
+    min-height: 0;
+    margin: 40px auto;
+    padding: 32px;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .app-header {
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  .todo-item {
+    padding: 12px 8px;
+    border-radius: 8px;
+  }
+
+  .todo-item:hover {
+    background-color: var(--color-hover);
+  }
+
+  .delete-button:hover {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  .add-button:hover {
+    background-color: var(--color-primary-dark);
+  }
+
+  .filter-tab:hover:not(.is-active) {
+    color: var(--color-text);
+  }
+
+  .clear-button:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background-color: #e0e7ff;
+  }
+}
+
+@media (min-width: 768px) and (hover: none) {
+  /* 触屏桌面设备不保留悬停效果 */
+  .todo-item:hover {
+    background-color: transparent;
+  }
+}
+
+/* ==========================================================================
+   减少动态效果偏好
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

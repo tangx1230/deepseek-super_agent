@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="响应式 Todo 待办事项应用,数据保存在浏览器本地。">
+  <meta name="color-scheme" content="light">
+  <title>待办事项</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app" aria-labelledby="app-title">
+    <header class="app-header">
+      <h1 id="app-title">待办事项</h1>
+      <p class="app-subtitle">记录每一件小事,逐项完成</p>
+    </header>
+
+    <section class="composer" aria-label="新增待办">
+      <form id="todo-form" class="composer-row" novalidate>
+        <label class="sr-only" for="todo-input">待办内容</label>
+        <input
+          id="todo-input"
+          class="todo-input"
+          type="text"
+          name="title"
+          placeholder="要做什么?"
+          maxlength="100"
+          autocomplete="off"
+          aria-describedby="input-hint input-error"
+        >
+        <button type="submit" class="add-button">添加</button>
+      </form>
+      <div class="composer-meta">
+        <span id="input-hint" class="input-hint">最多 100 字</span>
+        <span id="char-count" class="char-count" aria-hidden="true">0/100</span>
+      </div>
+      <p id="input-error" class="input-error" role="alert" hidden>请输入内容</p>
+    </section>
+
+    <ul id="todo-list" class="todo-list" aria-label="待办列表"></ul>
+
+    <div id="empty-state" class="empty-state" hidden>
+      <span class="empty-icon" aria-hidden="true">📝</span>
+      <p class="empty-text">暂无待办,添加一条吧</p>
+    </div>
+
+    <nav class="filters" aria-label="筛选待办">
+      <div class="filter-tabs" role="tablist" aria-label="按完成状态筛选">
+        <button type="button" class="filter-tab is-active" role="tab" aria-selected="true" data-filter="all">全部</button>
+        <button type="button" class="filter-tab" role="tab" aria-selected="false" data-filter="active">未完成</button>
+        <button type="button" class="filter-tab" role="tab" aria-selected="false" data-filter="completed">已完成</button>
+      </div>
+    </nav>
+
+    <footer class="status-bar">
+      <span id="remaining-count" class="remaining-count">剩余 0 项未完成</span>
+      <button id="clear-completed" type="button" class="clear-button" disabled>清除已完成</button>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
