@@ -6,6 +6,9 @@
 
 const STORAGE_KEY = 'todo-app-items';
 const MAX_TITLE_LENGTH = 100;
+const PRIORITIES = ['normal', 'urgent'];
+const PRIORITY_LABELS = { normal: '一般', urgent: '紧急' };
+const DEFAULT_PRIORITY = 'normal';
 
 let storageWarningShown = false;
 
@@ -26,6 +29,8 @@ function isValidTodo(item) {
     typeof item.completed === 'boolean' &&
     typeof item.createdAt === 'string' &&
     !Number.isNaN(Date.parse(item.createdAt)) &&
+    // priority 为新增字段:缺省视为“一般”,只接受 normal / urgent
+    (item.priority === undefined || PRIORITIES.includes(item.priority)) &&
     // dueAt 为新增的可选字段:缺省或 null 表示未指定时间
     (item.dueAt === undefined ||
       item.dueAt === null ||
@@ -59,8 +64,12 @@ function loadTodos() {
       console.warn('本地待办数据格式非法,已降级为空列表。');
       return [];
     }
-    // 兼容旧数据:没有 dueAt 字段的待办视为未指定时间
-    return parsed.map((todo) => ({ ...todo, dueAt: todo.dueAt ?? null }));
+    // 兼容旧数据:缺少 dueAt 视为未指定时间,缺少 priority 视为“一般”
+    return parsed.map((todo) => ({
+      ...todo,
+      priority: todo.priority === 'urgent' ? 'urgent' : 'normal',
+      dueAt: todo.dueAt ?? null,
+    }));
   } catch (error) {
     warnStorageOnce('读取本地待办数据失败,已降级为空列表。', error);
     return [];
@@ -89,6 +98,7 @@ const elements = {
   composerRow: document.querySelector('.composer-row'),
   input: document.getElementById('todo-input'),
   due: document.getElementById('todo-due'),
+  priorityInputs: document.querySelectorAll('input[name="priority"]'),
   error: document.getElementById('input-error'),
   charCount: document.getElementById('char-count'),
   list: document.getElementById('todo-list'),
@@ -188,9 +198,27 @@ function createTodoItem(todo) {
   deleteButton.setAttribute('aria-label', '删除待办');
   deleteButton.textContent = '×';
 
+  const priority = todo.priority === 'urgent' ? 'urgent' : 'normal';
+  const priorityBadge = document.createElement('span');
+  priorityBadge.className = `todo-priority is-${priority}`;
+  priorityBadge.dataset.priority = priority;
+  priorityBadge.textContent = PRIORITY_LABELS[priority];
+
+  const priorityButton = document.createElement('button');
+  priorityButton.type = 'button';
+  priorityButton.className = 'priority-toggle';
+  priorityButton.dataset.action = 'toggle-priority';
+  priorityButton.setAttribute('aria-label', getPriorityToggleLabel(todo.title, priority));
+  priorityButton.title = priority === 'urgent' ? '点击切换为一般' : '点击切换为紧急';
+  priorityButton.appendChild(priorityBadge);
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'todo-title-row';
+  titleRow.append(priorityButton, titleNode);
+
   const content = document.createElement('div');
   content.className = 'todo-content';
-  content.appendChild(titleNode);
+  content.appendChild(titleRow);
   if (todo.dueAt) {
     const dueNode = document.createElement('time');
     dueNode.className = 'todo-due';
@@ -298,6 +326,16 @@ function createId() {
 }
 
 /**
+ * 分类切换按钮的读屏文案。
+ * @param {string} title 待办标题
+ * @param {'normal'|'urgent'} priority 当前分类
+ * @returns {string} 按钮说明
+ */
+function getPriorityToggleLabel(title, priority) {
+  return priority === 'urgent' ? `将「${title}」改为一般` : `将「${title}」改为紧急`;
+}
+
+/**
  * 把 datetime-local 输入框的值转换为 ISO 时间字符串。
  * 空值或非法值返回 null,表示不为待办指定时间。
  * @param {string} value 输入框的值(本地时间)
@@ -309,6 +347,24 @@ function parseDueAtInput(value) {
   }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/**
+ * 读取当前选中的分类,未选或非法值回退到“一般”。
+ * @returns {'normal'|'urgent'} 分类
+ */
+function getSelectedPriority() {
+  const selected = elements.form.querySelector('input[name="priority"]:checked');
+  return selected && PRIORITIES.includes(selected.value) ? selected.value : DEFAULT_PRIORITY;
+}
+
+/**
+ * 新增成功后把分类选择重置为默认的“一般”。
+ */
+function resetPriorityInput() {
+  elements.priorityInputs.forEach((input) => {
+    input.checked = input.value === DEFAULT_PRIORITY;
+  });
 }
 
 /**
@@ -329,6 +385,7 @@ function handleSubmit(event) {
     title: title.slice(0, MAX_TITLE_LENGTH),
     completed: false,
     createdAt: new Date().toISOString(),
+    priority: getSelectedPriority(),
     dueAt: parseDueAtInput(elements.due.value),
   };
 
@@ -338,6 +395,7 @@ function handleSubmit(event) {
 
   elements.input.value = '';
   elements.due.value = '';
+  resetPriorityInput();
   updateCharCount();
   hideInputError();
   elements.input.focus();
@@ -408,6 +466,33 @@ function handleToggle(checkbox) {
 }
 
 /**
+ * 切换单条待办的分类(一般 <-> 紧急),并原地更新徽标,避免丢失键盘焦点。
+ * @param {HTMLButtonElement} button 分类切换按钮
+ */
+function handlePriorityToggle(button) {
+  const item = button.closest('.todo-item');
+  if (!item) {
+    return;
+  }
+  const todo = todos.find((entry) => entry.id === item.dataset.id);
+  if (!todo) {
+    return;
+  }
+  const priority = todo.priority === 'urgent' ? 'normal' : 'urgent';
+  todo.priority = priority;
+  saveTodos(todos);
+
+  const badge = button.querySelector('.todo-priority');
+  if (badge) {
+    badge.className = `todo-priority is-${priority}`;
+    badge.dataset.priority = priority;
+    badge.textContent = PRIORITY_LABELS[priority];
+  }
+  button.setAttribute('aria-label', getPriorityToggleLabel(todo.title, priority));
+  button.title = priority === 'urgent' ? '点击切换为一般' : '点击切换为紧急';
+}
+
+/**
  * 删除单条待办。
  * @param {HTMLElement} item 待办列表项
  */
@@ -468,6 +553,11 @@ function bindEvents() {
   });
 
   elements.list.addEventListener('click', (event) => {
+    const priorityButton = event.target.closest('.priority-toggle');
+    if (priorityButton) {
+      handlePriorityToggle(priorityButton);
+      return;
+    }
     const deleteButton = event.target.closest('.delete-button');
     if (deleteButton) {
       handleDelete(deleteButton.closest('.todo-item'));
