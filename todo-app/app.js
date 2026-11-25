@@ -604,11 +604,472 @@ function bindEvents() {
 }
 
 /* ==========================================================================
+   重要日子
+   ========================================================================== */
+
+const DATE_STORAGE_KEY = 'todo-app-important-dates';
+const MAX_DATE_NAME_LENGTH = 30;
+const MAX_DATE_NOTE_LENGTH = 50;
+const MIN_DATE_YEAR = 1900;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const dateElements = {
+  form: document.getElementById('date-form'),
+  name: document.getElementById('date-name'),
+  month: document.getElementById('date-month'),
+  day: document.getElementById('date-day'),
+  year: document.getElementById('date-year'),
+  note: document.getElementById('date-note'),
+  error: document.getElementById('date-error'),
+  list: document.getElementById('date-list'),
+  empty: document.getElementById('date-empty'),
+};
+
+let importantDates = loadImportantDates();
+
+/**
+ * 返回某个月份的天数。
+ * 未填写年份时按闰年处理,使 2 月 29 日生日也能被记录。
+ * @param {number} month 月份 1-12
+ * @param {number|null} year 年份,可为 null
+ * @returns {number} 该月天数
+ */
+function daysInMonth(month, year) {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    return 31;
+  }
+  const referenceYear = Number.isInteger(year) && year >= MIN_DATE_YEAR ? year : 2000;
+  return new Date(referenceYear, month, 0).getDate();
+}
+
+/**
+ * 判断一条本地数据是否符合重要日子数据模型。
+ * @param {unknown} item 待校验的数据
+ * @returns {boolean} 是否符合数据模型
+ */
+function isValidImportantDate(item) {
+  if (
+    typeof item !== 'object' ||
+    item === null ||
+    typeof item.id !== 'string' ||
+    item.id.length === 0 ||
+    typeof item.name !== 'string' ||
+    item.name.trim().length === 0 ||
+    item.name.length > MAX_DATE_NAME_LENGTH ||
+    !Number.isInteger(item.month) ||
+    item.month < 1 ||
+    item.month > 12 ||
+    !Number.isInteger(item.day) ||
+    item.day < 1 ||
+    typeof item.createdAt !== 'string' ||
+    Number.isNaN(Date.parse(item.createdAt))
+  ) {
+    return false;
+  }
+  const year = item.year ?? null;
+  if (
+    year !== null &&
+    (!Number.isInteger(year) || year < MIN_DATE_YEAR || year > new Date().getFullYear())
+  ) {
+    return false;
+  }
+  if (item.day > daysInMonth(item.month, year)) {
+    return false;
+  }
+  if (
+    item.note !== undefined &&
+    (typeof item.note !== 'string' || item.note.length > MAX_DATE_NOTE_LENGTH)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * 从 localStorage 读取重要日子。
+ * 读取失败或数据格式非法时降级为空列表,不影响待办功能。
+ * @returns {Array<object>} 重要日子数组
+ */
+function loadImportantDates() {
+  try {
+    const raw = localStorage.getItem(DATE_STORAGE_KEY);
+    if (raw === null) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.every(isValidImportantDate)) {
+      console.warn('本地重要日子数据格式非法,已降级为空列表。');
+      return [];
+    }
+    return parsed.map((item) => ({
+      ...item,
+      year: item.year ?? null,
+      note: item.note ?? '',
+    }));
+  } catch (error) {
+    warnStorageOnce('读取本地重要日子数据失败,已降级为空列表。', error);
+    return [];
+  }
+}
+
+/**
+ * 将重要日子写入 localStorage。
+ */
+function saveImportantDates() {
+  try {
+    localStorage.setItem(DATE_STORAGE_KEY, JSON.stringify(importantDates));
+  } catch (error) {
+    warnStorageOnce('本地存储不可用,当前更改不会被保存。', error);
+  }
+}
+
+/**
+ * 返回今天零点的本地 Date,用于按“天”计算倒数。
+ * @returns {Date} 今天 00:00
+ */
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+/**
+ * 计算某个“月-日”下一次出现的日期。
+ * 2 月 29 日在平年会顺延到 3 月 1 日。
+ * @param {number} month 月份 1-12
+ * @param {number} day 日
+ * @param {Date} today 今天 00:00
+ * @returns {Date} 下一次出现的日期(本地 00:00)
+ */
+function getNextOccurrence(month, day, today) {
+  let next = new Date(today.getFullYear(), month - 1, day);
+  if (next.getTime() < today.getTime()) {
+    next = new Date(today.getFullYear() + 1, month - 1, day);
+  }
+  return next;
+}
+
+/**
+ * 计算目标日期距今天还有多少天。
+ * @param {Date} target 目标日期(本地 00:00)
+ * @param {Date} today 今天 00:00
+ * @returns {number} 相差天数,0 表示今天
+ */
+function getDaysUntil(target, today) {
+  return Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * 把记录的年月日格式化为展示文本。
+ * 未填写年份时只显示月日。
+ * @param {object} item 重要日子
+ * @returns {string} 形如“1999年3月14日”或“3月14日”
+ */
+function formatDateWhen(item) {
+  if (item.year !== null) {
+    return `${item.year}年${item.month}月${item.day}日`;
+  }
+  return `${item.month}月${item.day}日`;
+}
+
+/**
+ * 倒数文案。
+ * @param {number} days 相差天数
+ * @returns {string} 今天 / 明天 / 还有 N 天
+ */
+function formatCountdown(days) {
+  if (days === 0) {
+    return '今天';
+  }
+  if (days === 1) {
+    return '明天';
+  }
+  return `还有 ${days} 天`;
+}
+
+/**
+ * 读取年份输入框:空值返回 null,非整数返回 NaN(由提交校验提示)。
+ * @returns {number|null} 年份
+ */
+function readYearInput() {
+  const raw = dateElements.year.value.trim();
+  if (raw === '') {
+    return null;
+  }
+  const year = Number(raw);
+  return Number.isInteger(year) ? year : Number.NaN;
+}
+
+/**
+ * 初始化月份下拉框。
+ */
+function buildMonthOptions() {
+  const fragment = document.createDocumentFragment();
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '月';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  fragment.appendChild(placeholder);
+
+  for (let month = 1; month <= 12; month += 1) {
+    const option = document.createElement('option');
+    option.value = String(month);
+    option.textContent = `${month}月`;
+    fragment.appendChild(option);
+  }
+  dateElements.month.replaceChildren(fragment);
+  syncDayOptions();
+}
+
+/**
+ * 根据所选月份和年份重建“日”下拉框,并尽量保留已选日期。
+ * 例如 2 月只列出 28/29 天,避免产生无效日期。
+ */
+function syncDayOptions() {
+  const month = Number.parseInt(dateElements.month.value, 10);
+  const year = readYearInput();
+  const yearForDays = Number.isInteger(year) && year >= MIN_DATE_YEAR ? year : null;
+  const maxDay = Number.isInteger(month) ? daysInMonth(month, yearForDays) : 31;
+  const previousDay = Number.parseInt(dateElements.day.value, 10);
+
+  const fragment = document.createDocumentFragment();
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '日';
+  placeholder.disabled = true;
+  fragment.appendChild(placeholder);
+
+  let hasSelectedDay = false;
+  for (let day = 1; day <= maxDay; day += 1) {
+    const option = document.createElement('option');
+    option.value = String(day);
+    option.textContent = `${day}日`;
+    const isSelected = Number.isInteger(previousDay) && previousDay === day;
+    option.selected = isSelected;
+    if (isSelected) {
+      hasSelectedDay = true;
+    }
+    fragment.appendChild(option);
+  }
+  placeholder.selected = !hasSelectedDay;
+  dateElements.day.replaceChildren(fragment);
+}
+
+/**
+ * 显示错误提示并聚焦到出错的控件。
+ * @param {string} message 错误文案
+ * @param {HTMLElement} [field] 需要聚焦并标记的控件
+ */
+function showDateError(message, field) {
+  dateElements.error.textContent = message;
+  dateElements.error.hidden = false;
+  [dateElements.name, dateElements.month, dateElements.day, dateElements.year].forEach((control) => {
+    control.removeAttribute('aria-invalid');
+  });
+  if (field) {
+    field.setAttribute('aria-invalid', 'true');
+    field.focus();
+  }
+}
+
+/**
+ * 隐藏错误提示并清除控件的错误状态。
+ */
+function hideDateError() {
+  dateElements.error.hidden = true;
+  dateElements.error.textContent = '';
+  [dateElements.name, dateElements.month, dateElements.day, dateElements.year].forEach((control) => {
+    control.removeAttribute('aria-invalid');
+  });
+}
+
+/**
+ * 新增成功后重置表单,把月份 / 日期恢复为占位选项。
+ */
+function resetDateForm() {
+  dateElements.form.reset();
+  dateElements.month.value = '';
+  syncDayOptions();
+  dateElements.day.value = '';
+  hideDateError();
+}
+
+/**
+ * 创建单条重要日子的 DOM 节点。
+ * @param {object} item 重要日子
+ * @param {number} days 距下次出现的天数
+ * @returns {HTMLLIElement} 列表项节点
+ */
+function createImportantDateItem(item, days) {
+  const listItem = document.createElement('li');
+  listItem.className = 'date-item';
+  listItem.dataset.id = item.id;
+
+  const main = document.createElement('div');
+  main.className = 'date-main';
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'date-name-row';
+  const name = document.createElement('span');
+  name.className = 'date-name';
+  name.textContent = item.name;
+  const when = document.createElement('span');
+  when.className = 'date-when';
+  when.textContent = formatDateWhen(item);
+  nameRow.append(name, when);
+  main.appendChild(nameRow);
+
+  if (item.note) {
+    const note = document.createElement('span');
+    note.className = 'date-note';
+    note.textContent = item.note;
+    main.appendChild(note);
+  }
+
+  const countdown = document.createElement('span');
+  countdown.className = 'date-countdown';
+  countdown.textContent = formatCountdown(days);
+  if (days === 0) {
+    countdown.classList.add('is-today');
+  } else if (days <= 7) {
+    countdown.classList.add('is-soon');
+  }
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'delete-button date-delete';
+  deleteButton.dataset.action = 'delete-date';
+  deleteButton.setAttribute('aria-label', `删除「${item.name}」`);
+  deleteButton.textContent = '×';
+
+  listItem.append(main, countdown, deleteButton);
+  return listItem;
+}
+
+/**
+ * 按距下次出现的天数升序渲染重要日子列表。
+ */
+function renderImportantDates() {
+  const today = startOfToday();
+  const entries = importantDates
+    .map((item) => {
+      const next = getNextOccurrence(item.month, item.day, today);
+      return { item, days: getDaysUntil(next, today) };
+    })
+    .sort((a, b) => {
+      if (a.days !== b.days) {
+        return a.days - b.days;
+      }
+      if (a.item.month !== b.item.month) {
+        return a.item.month - b.item.month;
+      }
+      return a.item.name.localeCompare(b.item.name, 'zh-Hans-CN');
+    });
+
+  const fragment = document.createDocumentFragment();
+  entries.forEach((entry) => {
+    fragment.appendChild(createImportantDateItem(entry.item, entry.days));
+  });
+  dateElements.list.replaceChildren(fragment);
+  dateElements.empty.hidden = entries.length > 0;
+}
+
+/**
+ * 处理新增重要日子的表单提交。
+ * @param {SubmitEvent} event 提交事件
+ */
+function handleDateSubmit(event) {
+  event.preventDefault();
+  const name = dateElements.name.value.trim();
+  const month = Number.parseInt(dateElements.month.value, 10);
+  const day = Number.parseInt(dateElements.day.value, 10);
+  const year = readYearInput();
+  const note = dateElements.note.value.trim();
+
+  if (!name) {
+    showDateError('请填写名称', dateElements.name);
+    return;
+  }
+  if (!Number.isInteger(month) || !Number.isInteger(day)) {
+    showDateError('请选择日期', Number.isInteger(month) ? dateElements.day : dateElements.month);
+    return;
+  }
+  if (Number.isNaN(year)) {
+    showDateError('年份请填写数字', dateElements.year);
+    return;
+  }
+  if (year !== null && (year < MIN_DATE_YEAR || year > new Date().getFullYear())) {
+    showDateError(
+      `年份需在 ${MIN_DATE_YEAR} 到 ${new Date().getFullYear()} 之间`,
+      dateElements.year
+    );
+    return;
+  }
+  if (day > daysInMonth(month, year)) {
+    showDateError('请选择有效日期', dateElements.day);
+    return;
+  }
+
+  importantDates.push({
+    id: createId(),
+    name: name.slice(0, MAX_DATE_NAME_LENGTH),
+    month,
+    day,
+    year,
+    note: note.slice(0, MAX_DATE_NOTE_LENGTH),
+    createdAt: new Date().toISOString(),
+  });
+  saveImportantDates();
+  resetDateForm();
+  renderImportantDates();
+  dateElements.name.focus();
+}
+
+/**
+ * 删除一条重要日子。
+ * @param {HTMLElement} listItem 列表项
+ */
+function handleDateDelete(listItem) {
+  const id = listItem.dataset.id;
+  importantDates = importantDates.filter((item) => item.id !== id);
+  saveImportantDates();
+  renderImportantDates();
+}
+
+/**
+ * 初始化重要日子:月份选项、事件绑定与首屏渲染。
+ */
+function initImportantDates() {
+  buildMonthOptions();
+
+  dateElements.form.addEventListener('submit', handleDateSubmit);
+  dateElements.month.addEventListener('change', () => {
+    syncDayOptions();
+    hideDateError();
+  });
+  dateElements.year.addEventListener('input', () => {
+    syncDayOptions();
+    hideDateError();
+  });
+  dateElements.name.addEventListener('input', hideDateError);
+
+  dateElements.list.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-action="delete-date"]');
+    if (button) {
+      handleDateDelete(button.closest('.date-item'));
+    }
+  });
+
+  renderImportantDates();
+}
+
+/* ==========================================================================
    初始化
    ========================================================================== */
 
 function init() {
   bindEvents();
+  initImportantDates();
   updateCharCount();
   render();
 }

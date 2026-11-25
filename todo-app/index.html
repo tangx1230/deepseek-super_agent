@@ -81,6 +81,69 @@
       <span id="remaining-count" class="remaining-count">剩余 0 项未完成</span>
       <button id="clear-completed" type="button" class="clear-button" disabled>清除已完成</button>
     </footer>
+
+    <section class="dates-section" aria-labelledby="dates-title">
+      <header class="dates-header">
+        <h2 id="dates-title" class="dates-title">重要日子</h2>
+        <p class="dates-subtitle">记下朋友生日和纪念日,每年自动倒数</p>
+      </header>
+
+      <form id="date-form" class="date-form" novalidate>
+        <div class="date-row">
+          <label class="composer-label" for="date-name">名称</label>
+          <input
+            id="date-name"
+            class="date-input"
+            type="text"
+            name="name"
+            placeholder="如:小王生日"
+            maxlength="30"
+            autocomplete="off"
+            aria-describedby="date-error"
+          >
+        </div>
+        <div class="date-row">
+          <span class="composer-label" id="date-parts-label">日期</span>
+          <div class="date-parts" role="group" aria-labelledby="date-parts-label">
+            <label class="sr-only" for="date-month">月份</label>
+            <select id="date-month" class="date-select" name="month" aria-describedby="date-error"></select>
+            <label class="sr-only" for="date-day">日期</label>
+            <select id="date-day" class="date-select" name="day" aria-describedby="date-error"></select>
+            <label class="sr-only" for="date-year">年份(选填)</label>
+            <input
+              id="date-year"
+              class="date-input date-year"
+              type="number"
+              name="year"
+              inputmode="numeric"
+              placeholder="年份(选填)"
+              aria-describedby="date-error"
+            >
+          </div>
+        </div>
+        <div class="date-row">
+          <label class="composer-label" for="date-note">备注</label>
+          <input
+            id="date-note"
+            class="date-input"
+            type="text"
+            name="note"
+            placeholder="选填,如:喜欢巧克力"
+            maxlength="50"
+            autocomplete="off"
+          >
+        </div>
+        <p id="date-error" class="input-error" role="alert" hidden></p>
+        <button type="submit" class="date-add-button">添加</button>
+      </form>
+
+      <ul id="date-list" class="date-list" aria-label="重要日子列表"></ul>
+
+      <div id="date-empty" class="date-empty" hidden>
+        <span class="date-empty-icon" aria-hidden="true">🎂</span>
+        <p class="date-empty-text">还没有重要日子,记下朋友的生日吧</p>
+      </div>
+    </section>
   </main>
   <script src="app.js"></script>
 </body>
