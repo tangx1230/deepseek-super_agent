@@ -3,17 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="响应式 Todo 待办事项应用,数据保存在浏览器本地。">
+  <meta name="description" content="响应式待办与日程应用,数据保存在浏览器本地。">
   <meta name="color-scheme" content="light">
-  <title>待办事项</title>
+  <title>待办与日程</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="app" aria-labelledby="app-title">
     <header class="app-header">
-      <h1 id="app-title">待办事项</h1>
-      <p class="app-subtitle">记录每一件小事,逐项完成</p>
+      <h1 id="app-title">待办与日程</h1>
+      <p class="app-subtitle">记录待办,安排日程,从容过好每一天</p>
     </header>
+
+    <section class="schedule" aria-labelledby="schedule-title">
+      <div class="section-heading">
+        <h2 id="schedule-title" class="section-title">日程安排</h2>
+        <div class="calendar-controls">
+          <button id="calendar-prev" type="button" class="calendar-nav" aria-label="上个月">‹</button>
+          <span id="calendar-month" class="calendar-month" aria-live="polite">2026年11月</span>
+          <button id="calendar-next" type="button" class="calendar-nav" aria-label="下个月">›</button>
+          <button id="calendar-today" type="button" class="calendar-today">今天</button>
+        </div>
+      </div>
+
+      <div id="calendar" class="calendar" role="grid" aria-label="月份日历">
+        <div class="calendar-weekdays" role="row">
+          <span role="columnheader" aria-label="星期一">一</span>
+          <span role="columnheader" aria-label="星期二">二</span>
+          <span role="columnheader" aria-label="星期三">三</span>
+          <span role="columnheader" aria-label="星期四">四</span>
+          <span role="columnheader" aria-label="星期五">五</span>
+          <span role="columnheader" aria-label="星期六">六</span>
+          <span role="columnheader" aria-label="星期日">日</span>
+        </div>
+      </div>
+
+      <div class="day-panel">
+        <div class="day-panel-header">
+          <h3 id="selected-date" class="selected-date" aria-live="polite">11月25日 周三</h3>
+          <span id="schedule-count" class="schedule-count">0 个日程</span>
+        </div>
+
+        <form id="schedule-form" class="schedule-form" novalidate>
+          <div class="schedule-fields">
+            <div class="schedule-field schedule-field--time">
+              <label class="schedule-label" for="schedule-time">时间</label>
+              <input id="schedule-time" class="schedule-time" type="time" name="time" step="60">
+            </div>
+            <div class="schedule-field schedule-field--title">
+              <label class="schedule-label" for="schedule-input">日程</label>
+              <input
+                id="schedule-input"
+                class="schedule-input"
+                type="text"
+                name="title"
+                placeholder="当天要做什么?"
+                maxlength="100"
+                autocomplete="off"
+                aria-describedby="schedule-hint schedule-error"
+              >
+            </div>
+          </div>
+          <div class="schedule-actions">
+            <span id="schedule-hint" class="schedule-hint">时间留空即为全天</span>
+            <button type="submit" class="schedule-add">添加日程</button>
+          </div>
+          <p id="schedule-error" class="schedule-error" role="alert" hidden>请输入日程内容</p>
+        </form>
+
+        <ul id="schedule-list" class="schedule-list" aria-label="当天日程"></ul>
+        <p id="schedule-empty" class="schedule-empty" hidden>当天暂无日程</p>
+      </div>
+    </section>
 
     <section class="composer" aria-label="新增待办">
       <form id="todo-form" class="composer-form" novalidate>
