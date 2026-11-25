@@ -105,6 +105,353 @@ h1 {
 }
 
 /* ==========================================================================
+   日程安排
+   ========================================================================== */
+.schedule {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-nav,
+.calendar-today {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: var(--color-accent-dark);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.calendar-nav {
+  padding: 0 6px;
+  font-size: 1.375rem;
+  line-height: 1;
+}
+
+.calendar-nav:hover,
+.calendar-today:hover {
+  border-color: var(--color-accent-border);
+  background-color: var(--color-accent-soft);
+}
+
+.calendar-month {
+  min-width: 5.75em;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-weekdays,
+.calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-weekdays span {
+  padding: 4px 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.calendar-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.calendar-day {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.calendar-day:hover {
+  background-color: var(--color-hover);
+}
+
+/* 今天用描边提示,选中日期用绿色实心,两者可叠加 */
+.calendar-day.is-today {
+  border-color: var(--color-accent-border);
+  color: var(--color-accent-dark);
+  font-weight: 700;
+}
+
+.calendar-day.is-selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.calendar-day.is-selected:hover {
+  border-color: var(--color-accent-dark);
+  background-color: var(--color-accent-dark);
+}
+
+/* 有日程的日期在数字下方显示一个圆点 */
+.calendar-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  transform: translateX(-50%);
+}
+
+.calendar-day.is-selected .calendar-dot {
+  background-color: #ffffff;
+}
+
+.day-panel {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-bg);
+}
+
+.day-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-date {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.schedule-count {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.schedule-form {
+  margin-top: 12px;
+}
+
+.schedule-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.schedule-field--time {
+  flex: 0 0 112px;
+}
+
+.schedule-field--title {
+  flex: 1 1 150px;
+}
+
+.schedule-label {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.schedule-time,
+.schedule-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.schedule-time:focus,
+.schedule-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
+.schedule-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
+}
+
+.schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+
+.schedule-hint {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.schedule-add {
+  min-height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.schedule-add:hover {
+  background-color: var(--color-accent-dark);
+}
+
+.schedule-error {
+  margin: 8px 0 0;
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 4px 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+}
+
+.schedule-item-time {
+  flex: 0 0 auto;
+  min-width: 2.75em;
+  color: var(--color-accent-dark);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-item-time.is-allday {
+  color: var(--color-text-muted);
+}
+
+.schedule-item-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.9375rem;
+}
+
+.schedule-delete {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.schedule-delete:hover {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-dark);
+}
+
+.schedule-empty {
+  margin: 12px 0 2px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ==========================================================================
    新增待办
    ========================================================================== */
 .composer-row {
@@ -592,6 +939,20 @@ h1 {
     font-size: 1.875rem;
   }
 
+  .schedule {
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+  }
+
+  .calendar-day {
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .day-panel {
+    padding: 16px;
+  }
+
   .todo-item {
     padding: 12px 8px;
     border-radius: 8px;
@@ -624,6 +985,18 @@ h1 {
   /* 触屏桌面设备不保留悬停效果 */
   .todo-item:hover {
     background-color: transparent;
+  }
+}
+
+/* 超窄屏去掉日历格间距,保证每个日期热区不小于 40px */
+@media (max-width: 360px) {
+  .calendar-weekdays,
+  .calendar-row {
+    gap: 0;
+  }
+
+  .calendar-day {
+    border-radius: 6px;
   }
 }
 
